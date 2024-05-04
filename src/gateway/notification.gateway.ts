@@ -6,20 +6,21 @@ import {
     WebSocketServer,
     SubscribeMessage,
     MessageBody,
+    ConnectedSocket,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
-import { AsyncApiPub, AsyncApiSub } from 'nestjs-asyncapi';
 import { UserSocketsMap } from './user-sockets.map';
+import { AuthService } from 'src/auth';
 
 @UsePipes(new ValidationPipe())
 @WebSocketGateway({
-    path: '/notification',
+    path: '/notification/socket.io', // Uncomment it when working without nginx
     cors: {
-        origin: ["null", null, "https://www.tutorify.site"],
+        origin: ["null", null, "https://www.tutorify.site", "https://tutorify-project.vercel.app"],
         methods: ["GET", "POST"],
-        transports: ['websocket', 'polling'],
         credentials: true
     },
+    transports: ['websocket', 'polling'],
     allowEIO3: true,
 })
 @Controller()
@@ -28,34 +29,38 @@ export class NotificationGateway implements OnGatewayConnection, OnGatewayDiscon
     private readonly server: Server;
 
     constructor(
+        private readonly authService: AuthService,
         // system-user-id <-> [socket-client-id]
         private readonly userSocketsMap: UserSocketsMap
     ) { }
 
-    async handleConnection(client: Socket): Promise<void> {
-        console.log("XHDU");
-        // const token = client.handshake?.query.token.toString();
-        // const payload = this.authService.verifyAccessToken(token);
+    handleConnection(client: Socket) {
+        try {
+            const token = client.handshake?.query.token.toString();
+            const payload = this.authService.validateAccessToken(token);
 
-        // const userId: string = payload.id;
+            const userId: string = payload.id;
 
-        // this.userSocketsMap.addConnection(client.id, userId);
+            this.userSocketsMap.addConnection(client.id, userId);
+        } catch (e) {
+            console.log("The token may be invalid");
+            client.emit('error', 'The token may be invalid');
+            client.disconnect(true);
+        }
     }
 
-    async handleDisconnect(client: Socket) {
-        // const userId = this.userSocketsMap.getUserIdByClientId(client.id);
-        // this.userSocketsMap.removeConnection(client.id);
+    handleDisconnect(client: Socket) {
+        const userId = this.userSocketsMap.getUserIdByClientId(client.id);
+        if (!userId) {
+            console.log("Disconnect anonymous user socket");
+            return;
+        }
+        console.log(`Disconnect user ${userId} socket`);
+        this.userSocketsMap.removeConnection(client.id);
     }
 
-    @AsyncApiPub({
-        channel: 'ping',
-        message: {
-            payload: String
-        },
-        description: 'Used to check socket connection. Receive the same thing you sent to the server'
-    })
-    @SubscribeMessage('ping')
-    async ping(@MessageBody() data: unknown) {
-        return data;
+    @SubscribeMessage('xxx')
+    ping(@MessageBody() data: unknown, @ConnectedSocket() client: Socket) {
+        client.emit('xxx', data);
     }
 }

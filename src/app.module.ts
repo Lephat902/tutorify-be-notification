@@ -1,6 +1,8 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { NotificationModule } from './gateway/notification.module';
+import { NotificationModule } from './gateway';
+import { AuthModule } from './auth';
+import { HealthCheckModule } from './health-check';
 
 @Module({
   imports: [
@@ -9,6 +11,8 @@ import { NotificationModule } from './gateway/notification.module';
       envFilePath: ['.env', '.env.example'],
     }),
     NotificationModule,
+    AuthModule,
+    HealthCheckModule,
   ],
 })
 export class AppModule { }

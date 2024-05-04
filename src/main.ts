@@ -1,8 +1,7 @@
-import { ClassSerializerInterceptor, INestApplication, InternalServerErrorException, ValidationPipe } from '@nestjs/common';
+import { ClassSerializerInterceptor, InternalServerErrorException, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory, Reflector } from '@nestjs/core';
 import { IoAdapter } from '@nestjs/platform-socket.io';
-import { AsyncApiDocumentBuilder, AsyncApiModule } from 'nestjs-asyncapi';
 import { AppModule } from './app.module';
 import { GlobalExceptionsFilter } from './global-exception-filter';
 
@@ -59,22 +58,10 @@ async function bootstrap() {
 
   app.useWebSocketAdapter(new IoAdapter(app));
 
-  await setUpAsyncApi(app);
+  // Prefix every requests with /notification except for the health-check path
+  app.setGlobalPrefix('notification', { exclude: ['/'] });
 
   await app.listen(configService.get<number>('PORT'));
 }
 
 bootstrap();
-
-const setUpAsyncApi = async (app: INestApplication<any>) => {
-  const asyncApiOptions = new AsyncApiDocumentBuilder()
-    .setTitle('Notification Service for Tutorify')
-    .setDescription('Notification Service enabled by Nest.js + Websockets socket.io')
-    .setVersion('1.0')
-    .setDefaultContentType('application/json')
-    .addSecurity('user-password', { type: 'userPassword' })
-    .build();
-
-  const asyncapiDocument = AsyncApiModule.createDocument(app, asyncApiOptions);
-  await AsyncApiModule.setup('socket-api', app, asyncapiDocument);
-};
