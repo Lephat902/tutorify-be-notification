@@ -1,9 +1,10 @@
-import { ClassSerializerInterceptor, InternalServerErrorException, ValidationPipe } from '@nestjs/common';
+import { ClassSerializerInterceptor, INestApplication, InternalServerErrorException, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory, Reflector } from '@nestjs/core';
 import { IoAdapter } from '@nestjs/platform-socket.io';
 import { AppModule } from './app.module';
 import { GlobalExceptionsFilter } from './global-exception-filter';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -61,7 +62,23 @@ async function bootstrap() {
   // Prefix every requests with /notification except for the health-check path
   app.setGlobalPrefix('notification', { exclude: ['/'] });
 
+  setUpSwagger(app);
+
   await app.listen(configService.get<number>('PORT'));
 }
 
 bootstrap();
+
+const setUpSwagger = (app: INestApplication<any>) => {
+  // Configure Swagger options
+  const swaggerOptions = new DocumentBuilder()
+    .setTitle('Tutorify Notification')
+    .setDescription('List of endpoints to communicate with Tutorify notification system')
+    .setVersion('1.0')
+    .addBearerAuth()
+    .build();
+
+  // Create Swagger document and set up Swagger UI
+  const swaggerDocument = SwaggerModule.createDocument(app, swaggerOptions);
+  SwaggerModule.setup('/notification/api', app, swaggerDocument);
+};

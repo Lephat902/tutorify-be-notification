@@ -13,4 +13,4 @@ import { AuthModule } from 'src/auth';
   ],
   controllers: [NotificationGateway],
 })
-export class NotificationModule { }
+export class NotificationGatewayModule { }
