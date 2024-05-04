@@ -5,6 +5,8 @@ import { IoAdapter } from '@nestjs/platform-socket.io';
 import { AppModule } from './app.module';
 import { GlobalExceptionsFilter } from './global-exception-filter';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { MicroserviceOptions, Transport } from '@nestjs/microservices';
+import { QueueNames } from '@tutorify/shared';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -63,6 +65,19 @@ async function bootstrap() {
   app.setGlobalPrefix('notification', { exclude: ['/'] });
 
   setUpSwagger(app);
+
+  app.connectMicroservice<MicroserviceOptions>({
+    transport: Transport.RMQ,
+    options: {
+      urls: [process.env.RABBITMQ_URI],
+      queue: QueueNames.NOTOFICATION,
+      queueOptions: {
+        durable: false,
+      },
+    },
+  });
+
+  await app.startAllMicroservices();
 
   await app.listen(configService.get<number>('PORT'));
 }

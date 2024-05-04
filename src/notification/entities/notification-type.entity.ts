@@ -16,7 +16,7 @@ export class NotificationType {
     @Column({ type: 'enum', enum: EntityType, nullable: false })
     entityType: EntityType;
 
-    @Column({ type: 'enum', enum: UserRole, nullable: false })
+    @Column({ type: 'enum', enum: UserRole, nullable: true })
     triggererUserRole: UserRole;
 
     @Column({ type: 'enum', enum: UserRole, nullable: false })

@@ -4,6 +4,9 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Notification, NotificationReceive, NotificationTrigger, NotificationType } from './entities';
 import { NotificationController } from './notification.controller';
 import { NotificationService } from './notification.service';
+import { APIGatewayProxy } from './proxies';
+import { NotificationRepository } from './notification.repository';
+import { HttpModule } from '@nestjs/axios';
 
 const entities = [
     NotificationTrigger,
@@ -24,9 +27,12 @@ const entities = [
             }),
             inject: [ConfigService],
         }),
+        HttpModule,
     ],
     providers: [
         NotificationService,
+        NotificationRepository,
+        APIGatewayProxy,
     ],
     controllers: [
         NotificationController,

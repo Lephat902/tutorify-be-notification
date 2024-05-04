@@ -11,6 +11,14 @@ import {
 import { Server, Socket } from 'socket.io';
 import { UserSocketsMap } from './user-sockets.map';
 import { AuthService } from 'src/auth';
+import { EventPattern } from '@nestjs/microservices';
+import {
+    ClassApplicationCreatedEventPattern,
+    ClassApplicationCreatedEventPayload,
+    FeedbackCreatedEventPattern,
+    FeedbackCreatedEventPayload
+} from '@tutorify/shared';
+import { NotificationService } from 'src/notification';
 
 @UsePipes(new ValidationPipe())
 @WebSocketGateway({
@@ -30,6 +38,7 @@ export class NotificationGateway implements OnGatewayConnection, OnGatewayDiscon
 
     constructor(
         private readonly authService: AuthService,
+        private readonly notificationService: NotificationService,
         // system-user-id <-> [socket-client-id]
         private readonly userSocketsMap: UserSocketsMap
     ) { }
@@ -62,5 +71,15 @@ export class NotificationGateway implements OnGatewayConnection, OnGatewayDiscon
     @SubscribeMessage('xxx')
     ping(@MessageBody() data: unknown, @ConnectedSocket() client: Socket) {
         client.emit('xxx', data);
+    }
+
+    @EventPattern(new ClassApplicationCreatedEventPattern())
+    handleClassApplicationCreated(payload: ClassApplicationCreatedEventPayload) {
+        return this.notificationService.handleClassApplicationCreated(payload);
+    }
+
+    @EventPattern(new FeedbackCreatedEventPattern())
+    handleFeedbackCreated(payload: FeedbackCreatedEventPayload) {
+        return this.notificationService.handleFeedbackCreated(payload);
     }
 }

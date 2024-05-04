@@ -1,72 +1,103 @@
 import { Injectable } from "@nestjs/common";
-import { InjectRepository } from "@nestjs/typeorm";
-import { Repository, SelectQueryBuilder } from "typeorm";
+import { ClassApplicationCreatedEventPayload, FeedbackCreatedEventPayload, UserRole } from "@tutorify/shared";
 import { NotificationQueryDto } from "./dtos";
-import { Notification, NotificationType } from "./entities";
-import Handlebars from "handlebars";
-import { Lang } from "./enums";
-import { notificationTypeSeeds } from "./seeds/notification-type.seed";
+import { ActionType } from "./entities/enums/action-type.enum";
+import { EntityType } from "./entities/enums/entity-type.enum";
+import { NotificationRepository } from "./notification.repository";
+import { APIGatewayProxy } from "./proxies";
+import { BasicUserInfoDto } from "./proxies/dtos";
+import { Utils } from "./utils";
 
 @Injectable()
 export class NotificationService {
     constructor(
-        @InjectRepository(Notification)
-        private readonly notificationRepository: Repository<Notification>,
-        @InjectRepository(NotificationType)
-        private readonly notificationTypeRepository: Repository<NotificationType>,
+        private readonly notificationRepository: NotificationRepository,
+        private readonly _APIGatewayProxy: APIGatewayProxy,
     ) { }
 
     async getNotifications(filters: NotificationQueryDto) {
-        // await this.notificationTypeRepository.save(notificationTypeSeeds);
-        const query = this.createQueryBuilderWithEagerLoading();
-
-        this.filterByUserId(query, filters.userId);
-        this.paginateResults(query, filters.page, filters.limit);
-
-        const [notifications, totalCount] = await query.getManyAndCount();
-        notifications.forEach(notification => {
-            notification.text = this.getNotificationText(notification, filters.lang);
-        });
-
-        return { results: notifications, totalCount };
+        return this.notificationRepository.getNotifications(filters);
     }
 
-    private createQueryBuilderWithEagerLoading(): SelectQueryBuilder<Notification> {
-        return this.notificationRepository
-            .createQueryBuilder('notification')
-            .leftJoinAndSelect('notification.notificationType', 'notificationType')
-            .leftJoinAndSelect('notification.notificationReceive', 'notificationReceive');
-    }
+    async handleClassApplicationCreated(payload: ClassApplicationCreatedEventPayload) {
+        const { classId, tutorId, isDesignated } = payload;
+        const { class: classData, tutor } = await this._APIGatewayProxy.getClassAndTutor(classId, tutorId);
+        const student = classData.student;
 
-    private filterByUserId(query: SelectQueryBuilder<Notification>, userId: string | undefined) {
-        if (userId) {
-            query.andWhere('notificationReceive.userId = :userId', {
-                userId,
-            });
+        if (isDesignated) {
+            return this.sendClassApplicationCreatedToTutor(student, classData.title, tutorId, payload);
+        } else {
+            return this.sendClassApplicationCreatedToStudent(tutor, classData.title, student.id, payload);
         }
     }
 
-    private paginateResults(query: SelectQueryBuilder<Notification>, page: number | undefined, limit: number | undefined) {
-        if (page && limit) {
-            query
-                .skip((page - 1) * limit)
-                .take(limit);
-        }
+    private async sendClassApplicationCreatedToTutor(
+        student: BasicUserInfoDto,
+        classTitle: string,
+        tutorId: string,
+        payload: ClassApplicationCreatedEventPayload,
+    ) {
+        const studentFullName = Utils.getFullName(student);
+
+        return this.notificationRepository.saveNewNotification(
+            {
+                studentName: studentFullName,
+                classTitle: classTitle,
+                ...payload,
+            },
+            {
+                actionType: ActionType.CREATE,
+                entityType: EntityType.CLASS_APPLICATION,
+                triggererUserRole: UserRole.STUDENT,
+                recipientUserRole: UserRole.TUTOR,
+            },
+            student.id,
+            [tutorId],
+        );
     }
 
-    private getNotificationText(notification: Notification, lang: Lang) {
-        const template = this.getTemplateByLang(notification.notificationType, lang);
-        return Handlebars.compile(template)(notification.data);
+    private async sendClassApplicationCreatedToStudent(
+        tutor: BasicUserInfoDto,
+        classTitle: string,
+        studentId: string,
+        payload: ClassApplicationCreatedEventPayload,
+    ) {
+        const tutorFullName = Utils.getFullName(tutor);
+
+        return this.notificationRepository.saveNewNotification(
+            {
+                tutorName: tutorFullName,
+                classTitle: classTitle,
+                ...payload,
+            },
+            {
+                actionType: ActionType.CREATE,
+                entityType: EntityType.CLASS_APPLICATION,
+                triggererUserRole: UserRole.TUTOR,
+                recipientUserRole: UserRole.STUDENT,
+            },
+            payload.tutorId,
+            [studentId],
+        );
     }
 
-    private getTemplateByLang(notificationType: NotificationType, lang: Lang) {
-        switch (lang) {
-            case Lang.EN:
-                return notificationType.templateEn;
-            case Lang.VI:
-                return notificationType.templateVi;
-            default:
-                return notificationType.templateEn;
-        }
+    async handleFeedbackCreated(payload: FeedbackCreatedEventPayload) {
+        const { userId, tutorId } = payload;
+        const user = await this._APIGatewayProxy.getUser(userId);
+
+        return this.notificationRepository.saveNewNotification(
+            {
+                userName: Utils.getFullName(user),
+                ...payload,
+            },
+            {
+                actionType: ActionType.CREATE,
+                entityType: EntityType.TUTOR_FEEDBACK,
+                triggererUserRole: null,
+                recipientUserRole: UserRole.TUTOR,
+            },
+            userId,
+            [tutorId],
+        );
     }
 }

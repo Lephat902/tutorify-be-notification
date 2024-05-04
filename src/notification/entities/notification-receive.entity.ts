@@ -1,4 +1,4 @@
-import { Column, Entity, OneToOne, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, ManyToOne, OneToOne, PrimaryGeneratedColumn } from 'typeorm';
 import { Notification } from './notification.entity';
 
 @Entity()
@@ -9,7 +9,7 @@ export class NotificationReceive {
   @Column()
   userId: string;
 
-  @OneToOne(() => Notification, notification => notification.notificationReceive)
+  @ManyToOne(() => Notification, notification => notification.notificationReceives)
   notification: Notification;
 
   @Column({ default: false })
