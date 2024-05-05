@@ -1,4 +1,4 @@
-import { Column, Entity, ManyToOne, OneToOne, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 import { Notification } from './notification.entity';
 
 @Entity()

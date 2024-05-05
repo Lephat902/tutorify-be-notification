@@ -3,9 +3,6 @@ import { InjectRepository } from "@nestjs/typeorm";
 import { Repository, SelectQueryBuilder } from "typeorm";
 import { NotificationQueryDto } from "./dtos";
 import { Notification, NotificationType } from "./entities";
-import Handlebars from "handlebars";
-import { Lang } from "./enums";
-import { notificationTypeSeeds } from "./seeds/notification-type.seed";
 
 @Injectable()
 export class NotificationRepository {
@@ -25,7 +22,7 @@ export class NotificationRepository {
 
         const [notifications, totalCount] = await query.getManyAndCount();
         notifications.forEach(notification => {
-            notification.text = this.getNotificationText(notification, filters.lang);
+            notification.setLang(filters.lang);
         });
 
         return { results: notifications, totalCount };
@@ -80,22 +77,6 @@ export class NotificationRepository {
             query
                 .skip((page - 1) * limit)
                 .take(limit);
-        }
-    }
-
-    private getNotificationText(notification: Notification, lang: Lang) {
-        const template = this.getTemplateByLang(notification.notificationType, lang);
-        return Handlebars.compile(template)(notification.data);
-    }
-
-    private getTemplateByLang(notificationType: NotificationType, lang: Lang) {
-        switch (lang) {
-            case Lang.EN:
-                return notificationType.templateEn;
-            case Lang.VI:
-                return notificationType.templateVi;
-            default:
-                return notificationType.templateEn;
         }
     }
 }

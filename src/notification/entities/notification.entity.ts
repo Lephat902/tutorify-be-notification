@@ -2,7 +2,9 @@ import { Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, OneToMany, One
 import { NotificationReceive } from './notification-receive.entity';
 import { NotificationTrigger } from './notification-trigger.entity';
 import { NotificationType } from './notification-type.entity';
-import { Exclude } from 'class-transformer';
+import { Exclude, Expose } from 'class-transformer';
+import { NotificationUtils } from '../notification.utils';
+import { Lang } from '../enums';
 
 @Entity()
 export class Notification {
@@ -21,10 +23,28 @@ export class Notification {
 
   @OneToOne(() => NotificationTrigger, notificationTrigger => notificationTrigger.notification, { cascade: true })
   @JoinColumn()
+  @Exclude()
   notificationTrigger: NotificationTrigger;
 
   @OneToMany(() => NotificationReceive, notificationReceive => notificationReceive.notification, { cascade: true })
+  @Exclude()
   notificationReceives: NotificationReceive[];
 
-  text?: string;
+  @Exclude()
+  private lang: Lang;
+
+  setLang (lang: Lang) {
+    this.lang = lang;
+  }
+
+  @Expose()
+  get text() {
+    const templateLang = this.lang || Lang.EN;
+    return NotificationUtils.getNotificationText(this, templateLang);
+  }
+
+  @Expose()
+  get isRead() {
+    return this.notificationReceives[0].isRead;
+  }
 }

@@ -1,53 +1,46 @@
-import { Injectable } from "@nestjs/common";
-import { Server, Socket } from "socket.io";
+import { Injectable } from '@nestjs/common';
+import { Socket } from 'socket.io';
 
 @Injectable()
 export class UserSocketsMap {
-    // Maps socket client ID to system user ID
-    clientIdToUserId: Map<string, string> = new Map();
+    // Maps socket client to system user ID
+    clientToUserId: Map<Socket, string> = new Map();
 
-    // Maps system user ID to a set of socket client IDs
-    userIdToClientIds: Map<string, Set<string>> = new Map();
+    // Maps system user ID to a set of socket clients
+    userIdToClients: Map<string, Set<Socket>> = new Map();
 
-    // Example method to add a connection
-    addConnection(clientId: string, userId: string) {
-        this.clientIdToUserId.set(clientId, userId);
-        if (!this.userIdToClientIds.has(userId)) {
-            this.userIdToClientIds.set(userId, new Set());
+    addConnection(client: Socket, userId: string) {
+        this.clientToUserId.set(client, userId);
+        if (!this.userIdToClients.has(userId)) {
+            this.userIdToClients.set(userId, new Set());
         }
-        this.userIdToClientIds.get(userId)?.add(clientId);
+        this.userIdToClients.get(userId)?.add(client);
     }
 
-    // Example method to remove a connection
-    removeConnection(clientId: string) {
-        const userId = this.clientIdToUserId.get(clientId);
+    removeConnection(client: Socket) {
+        const userId = this.clientToUserId.get(client);
         if (userId) {
-            this.userIdToClientIds.get(userId)?.delete(clientId);
+            this.userIdToClients.get(userId)?.delete(client);
             if (this.getNumOfClientsByUserId(userId) === 0) {
-                this.userIdToClientIds.delete(userId);
+                this.userIdToClients.delete(userId);
             }
-            this.clientIdToUserId.delete(clientId);
+            this.clientToUserId.delete(client);
         }
     }
 
     // Get Sockets by User ID
-    getSocketClientsByUserId(server: Server, userId: string): Socket[] {
-        const clientIds = this.userIdToClientIds.get(userId);
-        if (clientIds) {
-            return Array.from(clientIds)
-                .map(clientId => server.sockets.sockets.get(clientId))
-                .filter(socket => socket !== undefined);
-        }
-        return [];
+    getSocketClientsByUserId(userId: string): Socket[] {
+        const sockets: Set<Socket> = this.userIdToClients.get(userId) ?? new Set();
+        return Array.from(sockets);
     }
 
     // Optionally, get User ID by Socket Client ID
-    getUserIdByClientId(clientId: string): string | null {
-        return this.clientIdToUserId.get(clientId) || null;
+    getUserIdByClient(client: Socket): string | null {
+        return this.clientToUserId.get(client) || null;
     }
 
     getNumOfClientsByUserId(userId: string): number {
-        const numberOfClients = this.userIdToClientIds.get(userId)?.size;
+        const numberOfClients = this.userIdToClients.get(userId)?.size;
         return numberOfClients ?? 0;
     }
 }
