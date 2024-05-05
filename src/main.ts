@@ -1,12 +1,12 @@
 import { ClassSerializerInterceptor, INestApplication, InternalServerErrorException, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory, Reflector } from '@nestjs/core';
+import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 import { IoAdapter } from '@nestjs/platform-socket.io';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { QueueNames } from '@tutorify/shared';
 import { AppModule } from './app.module';
 import { GlobalExceptionsFilter } from './global-exception-filter';
-import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import { MicroserviceOptions, Transport } from '@nestjs/microservices';
-import { QueueNames } from '@tutorify/shared';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -61,9 +61,6 @@ async function bootstrap() {
 
   app.useWebSocketAdapter(new IoAdapter(app));
 
-  // Prefix every requests with /notification except for the health-check path
-  app.setGlobalPrefix('notification', { exclude: ['/'] });
-
   setUpSwagger(app);
 
   app.connectMicroservice<MicroserviceOptions>({
@@ -95,5 +92,5 @@ const setUpSwagger = (app: INestApplication<any>) => {
 
   // Create Swagger document and set up Swagger UI
   const swaggerDocument = SwaggerModule.createDocument(app, swaggerOptions);
-  SwaggerModule.setup('/notification/api', app, swaggerDocument);
+  SwaggerModule.setup('/notifications/api', app, swaggerDocument);
 };

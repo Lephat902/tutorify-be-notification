@@ -27,7 +27,7 @@ import { SocketLangMap } from './socket-lang.map';
 
 @UsePipes(new ValidationPipe())
 @WebSocketGateway({
-    path: '/notification/socket.io', // Uncomment it when working without nginx
+    path: '/notifications/socket.io',
     cors: {
         origin: [
             "null",

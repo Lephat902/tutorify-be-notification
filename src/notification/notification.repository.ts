@@ -1,9 +1,9 @@
 import { BadRequestException, Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
+import { SortingDirection } from "@tutorify/shared";
 import { Repository, SelectQueryBuilder } from "typeorm";
 import { NotificationQueryDto } from "./dtos";
-import { Notification, NotificationType } from "./entities";
-import { SortingDirection } from "@tutorify/shared";
+import { Notification, NotificationReceive, NotificationType } from "./entities";
 
 @Injectable()
 export class NotificationRepository {
@@ -20,6 +20,8 @@ export class NotificationRepository {
 
         // Notification is ordered by triggeredAt ASCly automatically
         query.orderBy('notification.triggeredAt', SortingDirection.ASC);
+        // Automatically exclude deleted notification (marked with isDeleted)
+        query.andWhere('notificationReceives.isDeleted = false');
         this.filterByUserId(query, filters.userId);
         this.getFromMarkItem(query, filters.markId, filters.getFromMarkDir);
         this.paginateResults(query, filters.page, filters.limit);
@@ -61,6 +63,18 @@ export class NotificationRepository {
         });
 
         return this.notificationRepository.save(newNotfication);
+    }
+
+    markNotificationsAs(userId: string, ids: string[], status: 'read' | 'deleted') {
+        // isRead as a fallback is safer
+        const columnToUpdate = status === 'deleted' ? 'isDeleted' : 'isRead';
+
+        return this.notificationRepository.createQueryBuilder('notification')
+            .innerJoin(NotificationReceive, 'notificationReceives')
+            .andWhere('userId = :userId', { userId })
+            .andWhere('notification.id IN (:...ids)', { ids })
+            .update(NotificationReceive, { [columnToUpdate]: true })
+            .execute();
     }
 
     private createQueryBuilderWithEagerLoading(): SelectQueryBuilder<Notification> {

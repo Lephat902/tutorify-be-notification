@@ -19,6 +19,10 @@ export class NotificationService {
         return this.notificationRepository.getNotifications(filters);
     }
 
+    async markNotificationAs(userId: string, ids: string[], status: 'read' | 'deleted') {
+        return this.notificationRepository.markNotificationsAs(userId, ids, status);
+    }
+
     async handleClassApplicationCreated(payload: ClassApplicationCreatedEventPayload) {
         const { classId, tutorId, isDesignated } = payload;
         const { class: classData, tutor } = await this._APIGatewayProxy.getClassAndTutor(classId, tutorId);
