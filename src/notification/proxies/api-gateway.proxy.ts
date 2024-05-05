@@ -15,6 +15,7 @@ export class APIGatewayProxy {
         class(id: $classId) {
           student {
             id
+            avatar
             lastName
             firstName
             middleName
@@ -47,6 +48,7 @@ export class APIGatewayProxy {
         class(id: $classId) {
           student {
             id
+            avatar
             lastName
             firstName
             middleName
@@ -54,6 +56,7 @@ export class APIGatewayProxy {
           title
         }
         tutor(id: $tutorId) {
+          avatar
           lastName
           firstName
           middleName
@@ -83,6 +86,7 @@ export class APIGatewayProxy {
     const query = `
       query ExampleQuery($tutorId: String!) {
         tutor(id: $tutorId) {
+          avatar
           lastName
           firstName
           middleName
@@ -112,6 +116,7 @@ export class APIGatewayProxy {
       query ExampleQuery($userId: String!) {
         user(id: $userId) {
           id
+          avatar
           lastName
           firstName
           middleName

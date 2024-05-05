@@ -1,10 +1,10 @@
+import { Exclude, Expose } from 'class-transformer';
 import { Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, OneToMany, OneToOne, PrimaryGeneratedColumn } from 'typeorm';
+import { Lang } from '../enums';
+import { NotificationUtils } from '../notification.utils';
 import { NotificationReceive } from './notification-receive.entity';
 import { NotificationTrigger } from './notification-trigger.entity';
 import { NotificationType } from './notification-type.entity';
-import { Exclude, Expose } from 'class-transformer';
-import { NotificationUtils } from '../notification.utils';
-import { Lang } from '../enums';
 
 @Entity()
 export class Notification {
@@ -13,6 +13,9 @@ export class Notification {
 
   @Column({ type: 'jsonb', nullable: true })
   data: object;
+
+  @Column({ nullable: true })
+  image: string;
 
   @CreateDateColumn()
   triggeredAt: string;

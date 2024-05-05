@@ -40,6 +40,7 @@ export class NotificationRepository {
         >,
         triggererUserId: string,
         recipientUserIds: string[],
+        image: string,
     ) {
         const existingNotificationType = await this.notificationTypeRepository.findOne({
             where: notificationType
@@ -55,7 +56,8 @@ export class NotificationRepository {
             },
             notificationReceives: recipientUserIds.map(userId => ({
                 userId
-            }))
+            })),
+            image
         });
 
         return this.notificationRepository.save(newNotfication);

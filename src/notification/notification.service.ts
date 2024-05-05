@@ -53,6 +53,7 @@ export class NotificationService {
             },
             student.id,
             [tutorId],
+            student?.avatar?.url,
         );
     }
 
@@ -78,6 +79,7 @@ export class NotificationService {
             },
             payload.tutorId,
             [studentId],
+            tutor?.avatar?.url,
         );
     }
 
@@ -98,6 +100,7 @@ export class NotificationService {
             },
             userId,
             [tutorId],
+            user?.avatar?.url,
         );
     }
 }
