@@ -3,6 +3,7 @@ import { InjectRepository } from "@nestjs/typeorm";
 import { Repository, SelectQueryBuilder } from "typeorm";
 import { NotificationQueryDto } from "./dtos";
 import { Notification, NotificationType } from "./entities";
+import { SortingDirection } from "@tutorify/shared";
 
 @Injectable()
 export class NotificationRepository {
@@ -17,7 +18,10 @@ export class NotificationRepository {
         // await this.notificationTypeRepository.save(notificationTypeSeeds);
         const query = this.createQueryBuilderWithEagerLoading();
 
+        // Notification is ordered by triggeredAt ASCly automatically
+        query.orderBy('notification.triggeredAt', SortingDirection.ASC);
         this.filterByUserId(query, filters.userId);
+        this.getFromMarkItem(query, filters.markId, filters.getFromMarkDir);
         this.paginateResults(query, filters.page, filters.limit);
 
         const [notifications, totalCount] = await query.getManyAndCount();
@@ -69,6 +73,24 @@ export class NotificationRepository {
             query.andWhere('notificationReceives.userId = :userId', {
                 userId,
             });
+        }
+    }
+
+    private getFromMarkItem(
+        query: SelectQueryBuilder<Notification>,
+        markId: string | undefined,
+        getFromMarkDir: SortingDirection | undefined,
+    ) {
+        if (markId) {
+            const markTriggeredAtSubQuery = this.notificationRepository.createQueryBuilder('notification')
+                .select('notification.triggeredAt')
+                .where('notification.id = :markId', { markId });
+
+            const comparisonOperator = getFromMarkDir === SortingDirection.ASC ? '>' : '<';
+            query.andWhere(
+                `notification.triggeredAt ${comparisonOperator} (` + markTriggeredAtSubQuery.getQuery() + ')',
+                { markId }
+            );
         }
     }
 
