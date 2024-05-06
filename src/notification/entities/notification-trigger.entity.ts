@@ -3,7 +3,7 @@ import { Notification } from './notification.entity';
 
 @Entity()
 export class NotificationTrigger {
-  @PrimaryGeneratedColumn('uuid')
+  @PrimaryGeneratedColumn('increment')
   id: string;
 
   @Column()

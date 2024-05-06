@@ -1,8 +1,7 @@
 import { Injectable } from "@nestjs/common";
-import { ClassApplicationCreatedEventPayload, FeedbackCreatedEventPayload, UserRole } from "@tutorify/shared";
+import { ClassApplicationCreatedEventPayload, FeedbackCreatedEventPayload } from "@tutorify/shared";
 import { NotificationQueryDto } from "./dtos";
-import { ActionType } from "./entities/enums/action-type.enum";
-import { EntityType } from "./entities/enums/entity-type.enum";
+import { NotificationType } from "./entities/enums/notification-type.enum";
 import { NotificationRepository } from "./notification.repository";
 import { APIGatewayProxy } from "./proxies";
 import { BasicUserInfoDto } from "./proxies/dtos";
@@ -49,12 +48,7 @@ export class NotificationService {
                 classTitle: classTitle,
                 ...payload,
             },
-            {
-                actionType: ActionType.CREATE,
-                entityType: EntityType.CLASS_APPLICATION,
-                triggererUserRole: UserRole.STUDENT,
-                recipientUserRole: UserRole.TUTOR,
-            },
+            NotificationType.TUTORING_REQUEST_CREATED,
             student.id,
             [tutorId],
             student?.avatar?.url,
@@ -75,12 +69,7 @@ export class NotificationService {
                 classTitle: classTitle,
                 ...payload,
             },
-            {
-                actionType: ActionType.CREATE,
-                entityType: EntityType.CLASS_APPLICATION,
-                triggererUserRole: UserRole.TUTOR,
-                recipientUserRole: UserRole.STUDENT,
-            },
+            NotificationType.CLASS_APPLICATION_CREATED,
             payload.tutorId,
             [studentId],
             tutor?.avatar?.url,
@@ -96,12 +85,7 @@ export class NotificationService {
                 userName: Utils.getFullName(user),
                 ...payload,
             },
-            {
-                actionType: ActionType.CREATE,
-                entityType: EntityType.TUTOR_FEEDBACK,
-                triggererUserRole: null,
-                recipientUserRole: UserRole.TUTOR,
-            },
+            NotificationType.TUTOR_FEEDBACK_CREATED,
             userId,
             [tutorId],
             user?.avatar?.url,

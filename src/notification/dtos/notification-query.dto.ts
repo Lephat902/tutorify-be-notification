@@ -2,21 +2,10 @@ import { ApiHideProperty, ApiProperty } from "@nestjs/swagger";
 import { SortingDirection } from "@tutorify/shared";
 import { Type } from "class-transformer";
 import { IsEnum, IsOptional, IsPositive, IsString, Max } from "class-validator";
-import { Lang } from "../enums";
 
 export class NotificationQueryDto {
     @ApiHideProperty()
     userId: string;
-
-    @IsOptional()
-    @IsEnum(Lang)
-    @ApiProperty({
-        description: 'Language of the notification',
-        enum: Lang,
-        required: false,
-        default: Lang.EN,
-    })
-    lang: Lang;
 
     @IsPositive()
     @IsOptional()

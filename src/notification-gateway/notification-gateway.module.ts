@@ -1,9 +1,8 @@
 import { Module } from '@nestjs/common';
-import { NotificationGateway } from './notification.gateway';
-import { UserSocketsMap } from './user-sockets.map';
 import { AuthModule } from 'src/auth';
 import { NotificationModule } from 'src/notification';
-import { SocketLangMap } from './socket-lang.map';
+import { NotificationGateway } from './notification.gateway';
+import { UserSocketsMap } from './user-sockets.map';
 
 @Module({
   imports: [
@@ -13,7 +12,6 @@ import { SocketLangMap } from './socket-lang.map';
   providers: [
     NotificationGateway,
     UserSocketsMap,
-    SocketLangMap,
   ],
   controllers: [NotificationGateway],
 })

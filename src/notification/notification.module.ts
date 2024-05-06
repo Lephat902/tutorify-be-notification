@@ -1,17 +1,16 @@
+import { HttpModule } from '@nestjs/axios';
 import { Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { Notification, NotificationReceive, NotificationTrigger, NotificationType } from './entities';
+import { Notification, NotificationReceives, NotificationTrigger } from './entities';
 import { NotificationController } from './notification.controller';
+import { NotificationRepository } from './notification.repository';
 import { NotificationService } from './notification.service';
 import { APIGatewayProxy } from './proxies';
-import { NotificationRepository } from './notification.repository';
-import { HttpModule } from '@nestjs/axios';
 
 const entities = [
     NotificationTrigger,
-    NotificationReceive,
-    NotificationType,
+    NotificationReceives,
     Notification,
 ];
 

@@ -2,8 +2,8 @@ import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 import { Notification } from './notification.entity';
 
 @Entity()
-export class NotificationReceive {
-  @PrimaryGeneratedColumn('uuid')
+export class NotificationReceives {
+  @PrimaryGeneratedColumn('increment')
   id: string;
 
   @Column()

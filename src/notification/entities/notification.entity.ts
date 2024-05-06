@@ -1,10 +1,8 @@
 import { Exclude, Expose } from 'class-transformer';
-import { Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, OneToMany, OneToOne, PrimaryGeneratedColumn } from 'typeorm';
-import { Lang } from '../enums';
-import { NotificationUtils } from '../notification.utils';
-import { NotificationReceive } from './notification-receive.entity';
+import { Column, CreateDateColumn, Entity, JoinColumn, OneToMany, OneToOne, PrimaryGeneratedColumn } from 'typeorm';
+import { NotificationType } from './enums/notification-type.enum';
+import { NotificationReceives } from './notification-receives.entity';
 import { NotificationTrigger } from './notification-trigger.entity';
-import { NotificationType } from './notification-type.entity';
 
 @Entity()
 export class Notification {
@@ -20,8 +18,7 @@ export class Notification {
   @CreateDateColumn()
   triggeredAt: string;
 
-  @ManyToOne(() => NotificationType, notificationType => notificationType.notifications)
-  @Exclude()
+  @Column({ type: 'enum', enum: NotificationType, nullable: false })
   notificationType: NotificationType;
 
   @OneToOne(() => NotificationTrigger, notificationTrigger => notificationTrigger.notification, { cascade: true })
@@ -29,22 +26,9 @@ export class Notification {
   @Exclude()
   notificationTrigger: NotificationTrigger;
 
-  @OneToMany(() => NotificationReceive, notificationReceive => notificationReceive.notification, { cascade: true })
+  @OneToMany(() => NotificationReceives, notificationReceives => notificationReceives.notification, { cascade: true })
   @Exclude()
-  notificationReceives: NotificationReceive[];
-
-  @Exclude()
-  private lang: Lang;
-
-  setLang (lang: Lang) {
-    this.lang = lang;
-  }
-
-  @Expose()
-  get text() {
-    const templateLang = this.lang || Lang.EN;
-    return NotificationUtils.getNotificationText(this, templateLang);
-  }
+  notificationReceives: NotificationReceives[];
 
   @Expose()
   get isRead() {

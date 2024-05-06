@@ -1,21 +1,19 @@
-import { BadRequestException, Injectable } from "@nestjs/common";
+import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { SortingDirection } from "@tutorify/shared";
 import { Repository, SelectQueryBuilder } from "typeorm";
 import { NotificationQueryDto } from "./dtos";
-import { Notification, NotificationReceive, NotificationType } from "./entities";
+import { Notification, NotificationReceives } from "./entities";
+import { NotificationType } from "./entities/enums/notification-type.enum";
 
 @Injectable()
 export class NotificationRepository {
     constructor(
         @InjectRepository(Notification)
         private readonly notificationRepository: Repository<Notification>,
-        @InjectRepository(NotificationType)
-        private readonly notificationTypeRepository: Repository<NotificationType>,
     ) { }
 
     async getNotifications(filters: NotificationQueryDto) {
-        // await this.notificationTypeRepository.save(notificationTypeSeeds);
         const query = this.createQueryBuilderWithEagerLoading();
 
         // Notification is ordered by triggeredAt ASCly automatically
@@ -26,33 +24,21 @@ export class NotificationRepository {
         this.getFromMarkItem(query, filters.markId, filters.getFromMarkDir);
         this.paginateResults(query, filters.page, filters.limit);
 
-        const [notifications, totalCount] = await query.getManyAndCount();
-        notifications.forEach(notification => {
-            notification.setLang(filters.lang);
-        });
+        const [results, totalCount] = await query.getManyAndCount();
 
-        return { results: notifications, totalCount };
+        return { results, totalCount };
     }
 
     async saveNewNotification(
         payload: object,
-        notificationType: Pick<
-            NotificationType,
-            'actionType' | 'entityType' | 'triggererUserRole' | 'recipientUserRole'
-        >,
+        notificationType: NotificationType,
         triggererUserId: string,
         recipientUserIds: string[],
         image: string,
     ) {
-        const existingNotificationType = await this.notificationTypeRepository.findOne({
-            where: notificationType
-        });
-        if (!existingNotificationType) {
-            throw new BadRequestException("Cannot handle this kind of event");
-        }
         const newNotfication = this.notificationRepository.create({
             data: payload,
-            notificationType: existingNotificationType,
+            notificationType,
             notificationTrigger: {
                 userId: triggererUserId,
             },
@@ -70,17 +56,16 @@ export class NotificationRepository {
         const columnToUpdate = status === 'deleted' ? 'isDeleted' : 'isRead';
 
         return this.notificationRepository.createQueryBuilder('notification')
-            .innerJoin(NotificationReceive, 'notificationReceives')
+            .innerJoin(NotificationReceives, 'notificationReceives')
             .andWhere('userId = :userId', { userId })
             .andWhere('notification.id IN (:...ids)', { ids })
-            .update(NotificationReceive, { [columnToUpdate]: true })
+            .update(NotificationReceives, { [columnToUpdate]: true })
             .execute();
     }
 
     private createQueryBuilderWithEagerLoading(): SelectQueryBuilder<Notification> {
         return this.notificationRepository
             .createQueryBuilder('notification')
-            .leftJoinAndSelect('notification.notificationType', 'notificationType')
             .leftJoinAndSelect('notification.notificationReceives', 'notificationReceives');
     }
 
