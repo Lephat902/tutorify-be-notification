@@ -4,7 +4,7 @@ import { AccessToken, TokenType } from "@tutorify/shared";
 import { Token, TokenRequirements } from "src/auth/decorators";
 import { TokenGuard } from "src/auth/guards";
 import { NotificationQueryDto } from "./dtos";
-import { NotificationService } from "./notification.service";
+import { NotificationService } from "./services/notification.service";
 
 @Controller('notifications')
 @ApiTags('Notification')

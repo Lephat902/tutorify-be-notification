@@ -2,31 +2,19 @@ import { Injectable } from "@nestjs/common";
 import {
     ApplicationStatus,
     ClassApplicationCreatedEventPayload,
-    ClassApplicationUpdatedEventPayload,
-    FeedbackCreatedEventPayload,
+    ClassApplicationUpdatedEventPayload
 } from "@tutorify/shared";
-import { NotificationQueryDto } from "./dtos";
-import { NotificationType } from "./entities/enums/notification-type.enum";
-import { NotificationRepository } from "./notification.repository";
-import { APIGatewayProxy } from "./proxies";
-import { Utils } from "./utils";
+import { NotificationType } from "../entities/enums/notification-type.enum";
+import { NotificationRepository } from "../notification.repository";
+import { APIGatewayProxy } from "../proxies";
+import { Utils } from "../utils";
 
 @Injectable()
-export class NotificationService {
+export class ClassApplicationNotificationService {
     constructor(
         private readonly notificationRepository: NotificationRepository,
         private readonly _APIGatewayProxy: APIGatewayProxy,
     ) { }
-
-    async getNotifications(filters: NotificationQueryDto) {
-        return this.notificationRepository.getNotifications(filters);
-    }
-
-    async markNotificationAs(userId: string, ids: string[], status: 'read' | 'deleted') {
-        return this.notificationRepository.markNotificationsAs(userId, ids, status);
-    }
-
-    // CLASS APPLICATION
 
     async handleClassApplicationCreated(payload: ClassApplicationCreatedEventPayload) {
         if (payload.isDesignated) {
@@ -83,15 +71,17 @@ export class NotificationService {
     async handleApplicationStatusChanged(payload: ClassApplicationUpdatedEventPayload) {
         const { newStatus, isDesignated } = payload;
 
-        if (newStatus === ApplicationStatus.APPROVED) {
-            if (isDesignated)
-                return this.sendTutoringRequestApprovedToStudent(payload);
-            else
-                return this.sendClassApplicationApprovedToTutor(payload);
+        if (newStatus === ApplicationStatus.APPROVED || newStatus === ApplicationStatus.REJECTED) {
+            return isDesignated ?
+                this.sendClassApplicationStatusChangedToStudent(payload) :
+                this.sendClassApplicationStatusChangedToTutor(payload);
+        }
+        if (newStatus === ApplicationStatus.CANCELLED) {
+            return this.sendClassApplicationStatusChangedToStudent(payload);
         }
     }
 
-    private async sendTutoringRequestApprovedToStudent(
+    private async sendClassApplicationStatusChangedToStudent(
         payload: ClassApplicationUpdatedEventPayload,
     ) {
         const { class: cl, tutor } = await this._APIGatewayProxy.getClassAndTutor(
@@ -107,14 +97,17 @@ export class NotificationService {
                 classTitle,
                 ...payload,
             },
-            NotificationType.TUTORING_REQUEST_APPROVED,
+            ClassApplicationNotificationService.determineNotificationType(
+                payload.newStatus,
+                payload.isDesignated,
+            ),
             payload.tutorId,
             [student.id],
             tutor?.avatar?.url,
         );
     }
 
-    private async sendClassApplicationApprovedToTutor(
+    private async sendClassApplicationStatusChangedToTutor(
         payload: ClassApplicationUpdatedEventPayload,
     ) {
         const { class: cl } = await this._APIGatewayProxy.getClassById(
@@ -129,30 +122,27 @@ export class NotificationService {
                 classTitle,
                 ...payload,
             },
-            NotificationType.CLASS_APPLICATION_APPROVED,
+            ClassApplicationNotificationService.determineNotificationType(
+                payload.newStatus,
+                payload.isDesignated,
+            ),
             student.id,
             [payload.tutorId],
             student?.avatar?.url,
         );
     }
 
-    // TUTOR FEEDBACK
+    private static determineNotificationType(newStatus: ApplicationStatus, isDesignated: boolean) {
+        const statusToNotificationTypeMap = {
+            [ApplicationStatus.APPROVED]: isDesignated ?
+                NotificationType.TUTORING_REQUEST_APPROVED :
+                NotificationType.CLASS_APPLICATION_APPROVED,
+            [ApplicationStatus.REJECTED]: isDesignated ?
+                NotificationType.TUTORING_REQUEST_REJECTED :
+                NotificationType.CLASS_APPLICATION_REJECTED,
+            [ApplicationStatus.CANCELLED]: NotificationType.CLASS_APPLICATION_CANCELLED
+        };
 
-    async handleFeedbackCreated(payload: FeedbackCreatedEventPayload) {
-        const { userId, tutorId } = payload;
-        const user = await this._APIGatewayProxy.getUser(userId);
-
-        return this.notificationRepository.saveNewNotification(
-            {
-                userName: Utils.getFullName(user),
-                ...payload,
-            },
-            NotificationType.TUTOR_FEEDBACK_CREATED,
-            userId,
-            [tutorId],
-            user?.avatar?.url,
-        );
+        return statusToNotificationTypeMap[newStatus];
     }
-
-    // CLASS SESSION
 }

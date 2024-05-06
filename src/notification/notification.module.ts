@@ -5,8 +5,9 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Notification, NotificationReceives, NotificationTrigger } from './entities';
 import { NotificationController } from './notification.controller';
 import { NotificationRepository } from './notification.repository';
-import { NotificationService } from './notification.service';
 import { APIGatewayProxy } from './proxies';
+import { Services } from './services';
+import { NotificationService } from './services/notification.service';
 
 const entities = [
     NotificationTrigger,
@@ -29,7 +30,7 @@ const entities = [
         HttpModule,
     ],
     providers: [
-        NotificationService,
+        ...Services,
         NotificationRepository,
         APIGatewayProxy,
     ],
