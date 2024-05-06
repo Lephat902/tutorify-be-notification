@@ -12,6 +12,8 @@ import {
 import {
     ClassApplicationCreatedEventPattern,
     ClassApplicationCreatedEventPayload,
+    ClassApplicationUpdatedEventPattern,
+    ClassApplicationUpdatedEventPayload,
     FeedbackCreatedEventPattern,
     FeedbackCreatedEventPayload
 } from '@tutorify/shared';
@@ -86,13 +88,19 @@ export class NotificationGateway implements OnGatewayConnection, OnGatewayDiscon
     @EventPattern(new ClassApplicationCreatedEventPattern())
     async handleClassApplicationCreated(payload: ClassApplicationCreatedEventPayload) {
         const notification = await this.notificationService.handleClassApplicationCreated(payload);
-        this.emitNotification(SocketEventPattern.CLASS_APPLICATION_CREATED, notification);
+        this.emitNotification(notification.notificationType, notification);
     }
 
     @EventPattern(new FeedbackCreatedEventPattern())
     async handleFeedbackCreated(payload: FeedbackCreatedEventPayload) {
         const notification = await this.notificationService.handleFeedbackCreated(payload);
-        this.emitNotification(SocketEventPattern.TUTOR_FEEDBACK_CREATED, notification);
+        this.emitNotification(notification.notificationType, notification);
+    }
+
+    @EventPattern(new ClassApplicationUpdatedEventPattern())
+    async handleApplicationStatusChanged(payload: ClassApplicationUpdatedEventPayload) {
+        const notification = await this.notificationService.handleApplicationStatusChanged(payload);
+        this.emitNotification(notification.notificationType, notification);
     }
 
     private emitNotification(eventPattern: SocketEventPattern, notification: Notification) {
