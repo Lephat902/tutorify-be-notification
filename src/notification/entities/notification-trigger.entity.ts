@@ -6,7 +6,7 @@ export class NotificationTrigger {
   @PrimaryGeneratedColumn('increment')
   id: string;
 
-  @Column()
+  @Column({ nullable: true })
   userId: string;
 
   @OneToOne(() => Notification, notification => notification.notificationTrigger)

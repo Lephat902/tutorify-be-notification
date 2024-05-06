@@ -27,14 +27,13 @@ export class ClassApplicationNotificationService {
     private async sendTutoringRequestCreatedToTutor(
         payload: ClassApplicationCreatedEventPayload
     ) {
-        const cl = await this._APIGatewayProxy.getClassById(payload.classId);
+        const cl = await this._APIGatewayProxy.getClassById(payload.classId, true);
         const { class: classData } = cl;
         const { student, title: classTitle } = classData;
-        const studentFullName = Utils.getFullName(student);
 
         return this.notificationRepository.saveNewNotification(
             {
-                studentName: studentFullName,
+                studentName: Utils.getFullName(student),
                 classTitle,
                 ...payload,
             },
@@ -50,20 +49,20 @@ export class ClassApplicationNotificationService {
     ) {
         const { class: cl, tutor } = await this._APIGatewayProxy.getClassAndTutor(
             payload.classId,
-            payload.tutorId
+            payload.tutorId,
+            false,
         );
-        const { student, title: classTitle } = cl;
-        const tutorFullName = Utils.getFullName(tutor);
+        const { studentId, title: classTitle } = cl;
 
         return this.notificationRepository.saveNewNotification(
             {
-                tutorName: tutorFullName,
+                tutorName: Utils.getFullName(tutor),
                 classTitle,
                 ...payload,
             },
             NotificationType.CLASS_APPLICATION_CREATED,
             payload.tutorId,
-            [student.id],
+            [studentId],
             tutor?.avatar?.url,
         );
     }
@@ -86,23 +85,23 @@ export class ClassApplicationNotificationService {
     ) {
         const { class: cl, tutor } = await this._APIGatewayProxy.getClassAndTutor(
             payload.classId,
-            payload.tutorId
+            payload.tutorId,
+            false,
         );
-        const { student, title: classTitle } = cl;
-        const tutorFullName = Utils.getFullName(tutor);
+        const { studentId, title: classTitle } = cl;
 
         return this.notificationRepository.saveNewNotification(
             {
-                tutorName: tutorFullName,
+                tutorName: Utils.getFullName(tutor),
                 classTitle,
                 ...payload,
             },
-            ClassApplicationNotificationService.determineNotificationType(
+            ClassApplicationNotificationService.determineNotificationTypeForUpdate(
                 payload.newStatus,
                 payload.isDesignated,
             ),
             payload.tutorId,
-            [student.id],
+            [studentId],
             tutor?.avatar?.url,
         );
     }
@@ -112,17 +111,17 @@ export class ClassApplicationNotificationService {
     ) {
         const { class: cl } = await this._APIGatewayProxy.getClassById(
             payload.classId,
+            true,
         );
         const { student, title: classTitle } = cl;
-        const studentName = Utils.getFullName(student);
 
         return this.notificationRepository.saveNewNotification(
             {
-                studentName,
+                studentName: Utils.getFullName(student),
                 classTitle,
                 ...payload,
             },
-            ClassApplicationNotificationService.determineNotificationType(
+            ClassApplicationNotificationService.determineNotificationTypeForUpdate(
                 payload.newStatus,
                 payload.isDesignated,
             ),
@@ -132,7 +131,7 @@ export class ClassApplicationNotificationService {
         );
     }
 
-    private static determineNotificationType(newStatus: ApplicationStatus, isDesignated: boolean) {
+    private static determineNotificationTypeForUpdate(newStatus: ApplicationStatus, isDesignated: boolean) {
         const statusToNotificationTypeMap = {
             [ApplicationStatus.APPROVED]: isDesignated ?
                 NotificationType.TUTORING_REQUEST_APPROVED :

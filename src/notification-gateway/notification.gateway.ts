@@ -6,19 +6,24 @@ import {
     OnGatewayConnection,
     OnGatewayDisconnect,
     SubscribeMessage,
-    WebSocketGateway,
-    WebSocketServer,
+    WebSocketGateway
 } from '@nestjs/websockets';
 import {
     ClassApplicationCreatedEventPattern,
     ClassApplicationCreatedEventPayload,
     ClassApplicationUpdatedEventPattern,
     ClassApplicationUpdatedEventPayload,
+    ClassSessionCreatedEventPattern,
+    ClassSessionCreatedEventPayload,
+    ClassSessionDeletedEventPattern,
+    ClassSessionDeletedEventPayload,
+    ClassSessionUpdatedEventPattern,
+    ClassSessionUpdatedEventPayload,
     FeedbackCreatedEventPattern,
     FeedbackCreatedEventPayload
 } from '@tutorify/shared';
 import { instanceToPlain } from 'class-transformer';
-import { Server, Socket } from 'socket.io';
+import { Socket } from 'socket.io';
 import { AuthService } from 'src/auth';
 import { NotificationService } from 'src/notification';
 import { Notification } from 'src/notification/entities';
@@ -44,9 +49,6 @@ import { UserSocketsMap } from './user-sockets.map';
 })
 @Controller()
 export class NotificationGateway implements OnGatewayConnection, OnGatewayDisconnect {
-    @WebSocketServer()
-    private readonly server: Server;
-
     constructor(
         private readonly authService: AuthService,
         private readonly notificationService: NotificationService,
@@ -85,11 +87,21 @@ export class NotificationGateway implements OnGatewayConnection, OnGatewayDiscon
         client.emit(SocketEventPattern.PING, data);
     }
 
+    // CLASS APPLICATION
+
     @EventPattern(new ClassApplicationCreatedEventPattern())
     async handleClassApplicationCreated(payload: ClassApplicationCreatedEventPayload) {
         const notification = await this.notificationService.handleClassApplicationCreated(payload);
         this.emitNotification(notification.notificationType, notification);
     }
+
+    @EventPattern(new ClassApplicationUpdatedEventPattern())
+    async handleApplicationStatusChanged(payload: ClassApplicationUpdatedEventPayload) {
+        const notification = await this.notificationService.handleApplicationStatusChanged(payload);
+        this.emitNotification(notification.notificationType, notification);
+    }
+
+    // TUTOR FEEDBACK
 
     @EventPattern(new FeedbackCreatedEventPattern())
     async handleFeedbackCreated(payload: FeedbackCreatedEventPayload) {
@@ -97,9 +109,23 @@ export class NotificationGateway implements OnGatewayConnection, OnGatewayDiscon
         this.emitNotification(notification.notificationType, notification);
     }
 
-    @EventPattern(new ClassApplicationUpdatedEventPattern())
-    async handleApplicationStatusChanged(payload: ClassApplicationUpdatedEventPayload) {
-        const notification = await this.notificationService.handleApplicationStatusChanged(payload);
+    // CLASS SESSION
+
+    @EventPattern(new ClassSessionCreatedEventPattern())
+    async handleClassSessionCreated(payload: ClassSessionCreatedEventPayload) {
+        const notification = await this.notificationService.handleClassSessionCreated(payload);
+        this.emitNotification(notification.notificationType, notification);
+    }
+
+    @EventPattern(new ClassSessionUpdatedEventPattern())
+    async handleClassSessionUpdated(payload: ClassSessionUpdatedEventPayload) {
+        const notification = await this.notificationService.handleClassSessionUpdated(payload);
+        this.emitNotification(notification.notificationType, notification);
+    }
+
+    @EventPattern(new ClassSessionDeletedEventPattern())
+    async handleClassSessionDeleted(payload: ClassSessionDeletedEventPayload) {
+        const notification = await this.notificationService.handleClassSessionDeleted(payload);
         this.emitNotification(notification.notificationType, notification);
     }
 

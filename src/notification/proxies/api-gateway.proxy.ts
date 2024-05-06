@@ -9,18 +9,22 @@ export class APIGatewayProxy {
     private readonly httpService: HttpService,
   ) { }
 
-  async getClassById(classId: string): Promise<Class> {
+  async getClassById(classId: string, fullStudent: boolean = true): Promise<Class> {
     const query = `
       query ExampleQuery($classId: String!) {
         class(id: $classId) {
-          student {
-            id
-            avatar {
-              url
+          ${fullStudent ? `
+            student {
+              id
+              avatar {
+                url
+              }
+              lastName
+              firstName
+              middleName
             }
-            lastName
-            firstName
-            middleName
+            ` :
+            `studentId`
           }
           title
         }
@@ -44,18 +48,23 @@ export class APIGatewayProxy {
     return data.data.data;
   }
 
-  async getClassAndTutor(classId: string, tutorId: string): Promise<Class & Tutor> {
+  // If the tutor belongs to class, use getClassById instead
+  async getClassAndTutor(classId: string, tutorId: string, fullStudent: boolean = true): Promise<Class & Tutor> {
     const query = `
       query ExampleQuery($tutorId: String!, $classId: String!) {
         class(id: $classId) {
-          student {
-            id
-            avatar {
-              url
+          ${fullStudent ? `
+            student {
+              id
+              avatar {
+                url
+              }
+              lastName
+              firstName
+              middleName
             }
-            lastName
-            firstName
-            middleName
+            ` :
+            `studentId`
           }
           title
         }
