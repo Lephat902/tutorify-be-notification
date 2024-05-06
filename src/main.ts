@@ -7,6 +7,7 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { QueueNames } from '@tutorify/shared';
 import { AppModule } from './app.module';
 import { GlobalExceptionsFilter } from './global-exception-filter';
+import helmet from 'helmet';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -16,7 +17,6 @@ async function bootstrap() {
 
   // Enable CORS with specific domain patterns
   app.enableCors({
-    allowedHeaders: ['content-type'],
     credentials: true,
     methods: 'GET,PUT,POST,PATCH,DELETE,UPDATE,OPTIONS',
     origin: (origin, callback) => {
@@ -48,6 +48,9 @@ async function bootstrap() {
 
   // Use the global exception filter
   app.useGlobalFilters(new GlobalExceptionsFilter());
+
+  // Use helmet middleware for security headers
+  app.use(helmet());
 
   // Set up global interceptor to standardize output using class serialization
   app.useGlobalInterceptors(new ClassSerializerInterceptor(app.get(Reflector)));
