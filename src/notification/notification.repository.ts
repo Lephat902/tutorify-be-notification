@@ -17,7 +17,7 @@ export class NotificationRepository {
         const query = this.createQueryBuilderWithEagerLoading();
 
         // Notification is ordered by triggeredAt ASCly automatically
-        query.orderBy('notification.triggeredAt', SortingDirection.ASC);
+        query.orderBy('notification.triggeredAt', SortingDirection.DESC);
         // Automatically exclude deleted notification (marked with isDeleted)
         query.andWhere('notificationReceives.isDeleted = false');
         this.filterByUserId(query, filters.userId);
