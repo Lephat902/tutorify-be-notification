@@ -14,4 +14,5 @@ export enum NotificationType {
     CLASS_SESSION_CANCELLED = 'session-cancelled',
     CLASS_SESSION_DELETED = 'session-deleted',
     CLASS_SESSION_FEEDBACK_UPDATED = 'session-feedback-updated',
+    CLASS_SESSION_EDITED = 'session-edited',
 }

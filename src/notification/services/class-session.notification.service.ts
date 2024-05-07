@@ -64,8 +64,12 @@ export class ClassSessionNotificationService {
     private static determineNotificationTypeForUpdate(payload: ClassSessionUpdatedEventPayload) {
         const { updatedAt, feedbackUpdatedAt, isCancelled } = payload;
 
-        if (!isCancelled && updatedAt && updatedAt === feedbackUpdatedAt)
-            return NotificationType.CLASS_SESSION_FEEDBACK_UPDATED;
+        if (!isCancelled && updatedAt) {
+            if (updatedAt === feedbackUpdatedAt)
+                return NotificationType.CLASS_SESSION_FEEDBACK_UPDATED;
+            else
+                return NotificationType.CLASS_SESSION_EDITED;
+        }
         else if (isCancelled && updatedAt)
             return NotificationType.CLASS_SESSION_CANCELLED;
     }
