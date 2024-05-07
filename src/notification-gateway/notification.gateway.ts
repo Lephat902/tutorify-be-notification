@@ -31,22 +31,7 @@ import { SocketEventPattern } from './socket-event-pattern.enum';
 import { UserSocketsMap } from './user-sockets.map';
 
 @UsePipes(new ValidationPipe())
-@WebSocketGateway({
-    path: '/notifications/socket.io',
-    cors: {
-        origin: [
-            "null",
-            null,
-            "https://www.tutorify.site",
-            "https://tutorify-project.vercel.app",
-            "http://localhost:3000",
-        ],
-        methods: ["GET", "POST"],
-        credentials: true
-    },
-    transports: ['websocket', 'polling'],
-    allowEIO3: true,
-})
+@WebSocketGateway()
 @Controller()
 export class NotificationGateway implements OnGatewayConnection, OnGatewayDisconnect {
     constructor(
