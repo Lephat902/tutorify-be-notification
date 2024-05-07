@@ -1,17 +1,19 @@
 import { Injectable } from "@nestjs/common";
-import { InjectRepository } from "@nestjs/typeorm";
 import { SortingDirection } from "@tutorify/shared";
-import { Repository, SelectQueryBuilder } from "typeorm";
-import { NotificationQueryDto } from "./dtos";
-import { Notification, NotificationReceives } from "./entities";
-import { NotificationType } from "./entities/enums/notification-type.enum";
+import { DataSource, Repository, SelectQueryBuilder } from "typeorm";
+import { NotificationQueryDto } from "../dtos";
+import { Notification, NotificationReceives } from "../entities";
+import { NotificationType } from "../entities/enums/notification-type.enum";
+import { UserRepository } from "./user.repository";
 
 @Injectable()
-export class NotificationRepository {
+export class NotificationRepository extends Repository<Notification> {
     constructor(
-        @InjectRepository(Notification)
-        private readonly notificationRepository: Repository<Notification>,
-    ) { }
+        private dataSource: DataSource,
+        private readonly userRepository: UserRepository,
+    ) {
+        super(Notification, dataSource.createEntityManager());
+    }
 
     async getNotifications(filters: NotificationQueryDto) {
         const query = this.createQueryBuilderWithEagerLoading();
@@ -35,25 +37,29 @@ export class NotificationRepository {
         triggererUserId: string,
         recipientUserIds: string[],
     ) {
-        const newNotfication = this.notificationRepository.create({
+        // It may seem redundant at first, however, it is required for the notification payload returned to user socket at real time
+        const triggerer = await this.userRepository.findOneBy({ id: triggererUserId });
+        const newNotfication = this.create({
             data: payload,
             notificationType,
             notificationTrigger: {
-                userId: triggererUserId,
+                user: triggerer
             },
             notificationReceives: recipientUserIds.map(userId => ({
-                userId
+                user: {
+                    id: userId
+                }
             })),
         });
 
-        return this.notificationRepository.save(newNotfication);
+        return this.save(newNotfication);
     }
 
     markNotificationsAs(userId: string, ids: string[], status: 'read' | 'deleted') {
         // isRead as a fallback is safer
         const columnToUpdate = status === 'deleted' ? 'isDeleted' : 'isRead';
 
-        return this.notificationRepository.createQueryBuilder('notification')
+        return this.createQueryBuilder('notification')
             .innerJoin(NotificationReceives, 'notificationReceives')
             .andWhere('userId = :userId', { userId })
             .andWhere('notification.id IN (:...ids)', { ids })
@@ -62,9 +68,11 @@ export class NotificationRepository {
     }
 
     private createQueryBuilderWithEagerLoading(): SelectQueryBuilder<Notification> {
-        return this.notificationRepository
+        return this
             .createQueryBuilder('notification')
-            .leftJoinAndSelect('notification.notificationReceives', 'notificationReceives');
+            .leftJoinAndSelect('notification.notificationReceives', 'notificationReceives')
+            .leftJoinAndSelect('notification.notificationTrigger', 'notificationTrigger')
+            .leftJoinAndSelect('notificationTrigger.user', 'user');
     }
 
     private filterByUserId(query: SelectQueryBuilder<Notification>, userId: string | undefined) {
@@ -81,7 +89,7 @@ export class NotificationRepository {
         getFromMarkDir: SortingDirection | undefined,
     ) {
         if (markId) {
-            const markTriggeredAtSubQuery = this.notificationRepository.createQueryBuilder('notification')
+            const markTriggeredAtSubQuery = this.createQueryBuilder('notification')
                 .select('notification.triggeredAt')
                 .where('notification.id = :markId', { markId });
 

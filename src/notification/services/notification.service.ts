@@ -8,7 +8,7 @@ import {
     FeedbackCreatedEventPayload
 } from "@tutorify/shared";
 import { NotificationQueryDto } from "../dtos";
-import { NotificationRepository } from "../notification.repository";
+import { NotificationRepository } from "../repositories";
 import { ClassApplicationNotificationService } from "./class-application.notification.service";
 import { FeedbackNotificationService } from "./feedback.notification.service";
 import { ClassSessionNotificationService } from "./class-session.notification.service";

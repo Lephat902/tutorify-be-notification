@@ -3,7 +3,7 @@ import {
     FeedbackCreatedEventPayload
 } from "@tutorify/shared";
 import { NotificationType } from "../entities/enums/notification-type.enum";
-import { NotificationRepository } from "../notification.repository";
+import { NotificationRepository } from "../repositories";
 
 @Injectable()
 export class FeedbackNotificationService {

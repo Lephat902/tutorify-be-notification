@@ -131,7 +131,7 @@ export class NotificationGateway implements OnGatewayConnection, OnGatewayDiscon
 
     private emitNotification(eventPattern: SocketEventPattern, notification: Notification) {
         // Get recipients ids
-        const recipientsIds = notification.notificationReceives.map(rec => rec.userId);
+        const recipientsIds = notification.notificationReceives.map(rec => rec.user.id);
         // Get all the connected sockets of those recipients
         const recipientsSockets = recipientsIds.flatMap(
             recipientsId => this.userSocketsMap.getSocketClientsByUserId(recipientsId)

@@ -3,9 +3,9 @@ import { Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ProxiesModule } from '@tutorify/shared';
-import { Notification, NotificationReceives, NotificationTrigger } from './entities';
-import { NotificationController } from './notification.controller';
-import { NotificationRepository } from './notification.repository';
+import { Controllers } from './controllers';
+import { Notification, NotificationReceives, NotificationTrigger, User } from './entities';
+import { Repositories } from './repositories';
 import { Services } from './services';
 import { NotificationService } from './services/notification.service';
 
@@ -13,6 +13,7 @@ const entities = [
     NotificationTrigger,
     NotificationReceives,
     Notification,
+    User,
 ];
 
 @Module({
@@ -32,11 +33,9 @@ const entities = [
     ],
     providers: [
         ...Services,
-        NotificationRepository,
+        ...Repositories,
     ],
-    controllers: [
-        NotificationController,
-    ],
+    controllers: Controllers,
     exports: [
         NotificationService,
     ],

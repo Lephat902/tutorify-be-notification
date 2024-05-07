@@ -18,7 +18,7 @@ export class Notification {
   @Column({ type: 'enum', enum: NotificationType, nullable: false })
   notificationType: NotificationType;
 
-  @OneToOne(() => NotificationTrigger, notificationTrigger => notificationTrigger.notification, { cascade: true })
+  @OneToOne(() => NotificationTrigger, notificationTrigger => notificationTrigger.notification, { cascade: true, eager: true })
   @JoinColumn()
   @Exclude()
   notificationTrigger: NotificationTrigger;
@@ -30,5 +30,10 @@ export class Notification {
   @Expose()
   get isRead() {
     return this.notificationReceives[0].isRead;
+  }
+
+  @Expose()
+  get triggerer() {
+    return this.notificationTrigger.user;
   }
 }
