@@ -12,9 +12,6 @@ export class Notification {
   @Column({ type: 'jsonb', nullable: true })
   data: object;
 
-  @Column({ nullable: true })
-  image: string;
-
   @CreateDateColumn()
   triggeredAt: string;
 

@@ -1,78 +1,63 @@
 import { Injectable } from "@nestjs/common";
 import {
+    ClassProxy,
     ClassSessionCreatedEventPayload,
     ClassSessionDeletedEventPayload,
     ClassSessionUpdatedEventPayload
 } from "@tutorify/shared";
 import { NotificationType } from "../entities/enums/notification-type.enum";
 import { NotificationRepository } from "../notification.repository";
-import { APIGatewayProxy } from "../proxies";
-import { Utils } from "../utils";
+import { Class } from "../proxy-dtos";
 
 @Injectable()
 export class ClassSessionNotificationService {
     constructor(
         private readonly notificationRepository: NotificationRepository,
-        private readonly _APIGatewayProxy: APIGatewayProxy,
+        private readonly classProxy: ClassProxy,
     ) { }
 
     async handleClassSessionCreated(payload: ClassSessionCreatedEventPayload) {
-        const { class: classData, tutor } = await this._APIGatewayProxy.getClassAndTutor(
-            payload.classId,
-            payload.tutorId,
-            false
-        );
-        const { studentId } = classData;
+        const classData = await this.classProxy.getClassById<Class>(payload.classId);
+        const { studentId, title: classTitle } = classData;
 
         return this.notificationRepository.saveNewNotification(
             {
-                tutorName: Utils.getFullName(tutor),
+                classTitle,
                 ...payload
             },
             NotificationType.CLASS_SESSION_CREATED,
-            tutor.id,
+            payload.tutorId,
             [studentId],
-            tutor?.avatar?.url,
         );
     }
 
     async handleClassSessionUpdated(payload: ClassSessionUpdatedEventPayload) {
-        const { class: classData, tutor } = await this._APIGatewayProxy.getClassAndTutor(
-            payload.classId,
-            payload.tutorId,
-            false
-        );
-        const { studentId } = classData;
+        const classData = await this.classProxy.getClassById<Class>(payload.classId);
+        const { studentId, title: classTitle } = classData;
 
         return this.notificationRepository.saveNewNotification(
             {
-                tutorName: Utils.getFullName(tutor),
+                classTitle,
                 ...payload
             },
             ClassSessionNotificationService.determineNotificationTypeForUpdate(payload),
-            tutor.id,
+            payload.tutorId,
             [studentId],
-            tutor?.avatar?.url,
         );
     }
 
     async handleClassSessionDeleted(payload: ClassSessionDeletedEventPayload) {
-        const { class: classData, tutor } = await this._APIGatewayProxy.getClassAndTutor(
-            payload.classId,
-            payload.tutorId,
-            false
-        );
-        const { studentId } = classData;
+        const classData = await this.classProxy.getClassById<Class>(payload.classId);
+        const { studentId, title: classTitle } = classData;
 
         return this.notificationRepository.saveNewNotification(
             {
-                tutorName: Utils.getFullName(tutor),
+                classTitle,
                 ...payload
             },
             NotificationType.CLASS_SESSION_DELETED,
-            tutor.id,
+            payload.tutorId,
             [studentId],
-            tutor?.avatar?.url,
         );
     }
 

@@ -2,10 +2,10 @@ import { HttpModule } from '@nestjs/axios';
 import { Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { ProxiesModule } from '@tutorify/shared';
 import { Notification, NotificationReceives, NotificationTrigger } from './entities';
 import { NotificationController } from './notification.controller';
 import { NotificationRepository } from './notification.repository';
-import { APIGatewayProxy } from './proxies';
 import { Services } from './services';
 import { NotificationService } from './services/notification.service';
 
@@ -28,11 +28,11 @@ const entities = [
             inject: [ConfigService],
         }),
         HttpModule,
+        ProxiesModule,
     ],
     providers: [
         ...Services,
         NotificationRepository,
-        APIGatewayProxy,
     ],
     controllers: [
         NotificationController,

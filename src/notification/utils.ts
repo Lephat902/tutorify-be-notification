@@ -1,4 +1,4 @@
-import { BasicUserInfoDto } from "./proxies/dtos";
+import { BasicUserInfoDto } from "./proxy-dtos";
 
 export class Utils {
     static getFullName(user: BasicUserInfoDto) {

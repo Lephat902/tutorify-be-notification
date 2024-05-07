@@ -34,7 +34,6 @@ export class NotificationRepository {
         notificationType: NotificationType,
         triggererUserId: string,
         recipientUserIds: string[],
-        image: string,
     ) {
         const newNotfication = this.notificationRepository.create({
             data: payload,
@@ -45,7 +44,6 @@ export class NotificationRepository {
             notificationReceives: recipientUserIds.map(userId => ({
                 userId
             })),
-            image
         });
 
         return this.notificationRepository.save(newNotfication);

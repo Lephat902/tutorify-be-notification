@@ -2,18 +2,18 @@ import { Injectable } from "@nestjs/common";
 import {
     ApplicationStatus,
     ClassApplicationCreatedEventPayload,
-    ClassApplicationUpdatedEventPayload
+    ClassApplicationUpdatedEventPayload,
+    ClassProxy
 } from "@tutorify/shared";
 import { NotificationType } from "../entities/enums/notification-type.enum";
 import { NotificationRepository } from "../notification.repository";
-import { APIGatewayProxy } from "../proxies";
-import { Utils } from "../utils";
+import { Class } from "../proxy-dtos";
 
 @Injectable()
 export class ClassApplicationNotificationService {
     constructor(
         private readonly notificationRepository: NotificationRepository,
-        private readonly _APIGatewayProxy: APIGatewayProxy,
+        private readonly classProxy: ClassProxy,
     ) { }
 
     async handleClassApplicationCreated(payload: ClassApplicationCreatedEventPayload) {
@@ -27,43 +27,34 @@ export class ClassApplicationNotificationService {
     private async sendTutoringRequestCreatedToTutor(
         payload: ClassApplicationCreatedEventPayload
     ) {
-        const cl = await this._APIGatewayProxy.getClassById(payload.classId, true);
-        const { class: classData } = cl;
-        const { student, title: classTitle } = classData;
+        const classData = await this.classProxy.getClassById<Class>(payload.classId);
+        const { studentId, title: classTitle } = classData;
 
         return this.notificationRepository.saveNewNotification(
             {
-                studentName: Utils.getFullName(student),
                 classTitle,
                 ...payload,
             },
             NotificationType.TUTORING_REQUEST_CREATED,
-            student.id,
+            studentId,
             [payload.tutorId],
-            student?.avatar?.url,
         );
     }
 
     private async sendClassApplicationCreatedToStudent(
         payload: ClassApplicationCreatedEventPayload,
     ) {
-        const { class: cl, tutor } = await this._APIGatewayProxy.getClassAndTutor(
-            payload.classId,
-            payload.tutorId,
-            false,
-        );
-        const { studentId, title: classTitle } = cl;
+        const classData = await this.classProxy.getClassById<Class>(payload.classId);
+        const { studentId, title: classTitle } = classData;
 
         return this.notificationRepository.saveNewNotification(
             {
-                tutorName: Utils.getFullName(tutor),
                 classTitle,
                 ...payload,
             },
             NotificationType.CLASS_APPLICATION_CREATED,
             payload.tutorId,
             [studentId],
-            tutor?.avatar?.url,
         );
     }
 
@@ -83,16 +74,11 @@ export class ClassApplicationNotificationService {
     private async sendClassApplicationStatusChangedToStudent(
         payload: ClassApplicationUpdatedEventPayload,
     ) {
-        const { class: cl, tutor } = await this._APIGatewayProxy.getClassAndTutor(
-            payload.classId,
-            payload.tutorId,
-            false,
-        );
-        const { studentId, title: classTitle } = cl;
+        const classData = await this.classProxy.getClassById<Class>(payload.classId);
+        const { studentId, title: classTitle } = classData;
 
         return this.notificationRepository.saveNewNotification(
             {
-                tutorName: Utils.getFullName(tutor),
                 classTitle,
                 ...payload,
             },
@@ -102,22 +88,17 @@ export class ClassApplicationNotificationService {
             ),
             payload.tutorId,
             [studentId],
-            tutor?.avatar?.url,
         );
     }
 
     private async sendClassApplicationStatusChangedToTutor(
         payload: ClassApplicationUpdatedEventPayload,
     ) {
-        const { class: cl } = await this._APIGatewayProxy.getClassById(
-            payload.classId,
-            true,
-        );
-        const { student, title: classTitle } = cl;
+        const classData = await this.classProxy.getClassById<Class>(payload.classId);
+        const { studentId, title: classTitle } = classData;
 
         return this.notificationRepository.saveNewNotification(
             {
-                studentName: Utils.getFullName(student),
                 classTitle,
                 ...payload,
             },
@@ -125,9 +106,8 @@ export class ClassApplicationNotificationService {
                 payload.newStatus,
                 payload.isDesignated,
             ),
-            student.id,
+            studentId,
             [payload.tutorId],
-            student?.avatar?.url,
         );
     }
 
