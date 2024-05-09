@@ -49,6 +49,10 @@ export class NotificationService {
     // CLASS SESSION
 
     handleClassSessionCreated(payload: ClassSessionCreatedEventPayload) {
+        // Ignore other recurring sessions
+        if (!payload.isFirstSessionInBatch) {
+            return;
+        }
         console.log("Start sending session-created notification");
         return this.classSessionNotificationService.handleClassSessionCreated(payload);
     }

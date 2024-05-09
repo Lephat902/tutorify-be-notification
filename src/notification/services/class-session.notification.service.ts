@@ -72,5 +72,7 @@ export class ClassSessionNotificationService {
         }
         else if (isCancelled && updatedAt)
             return NotificationType.CLASS_SESSION_CANCELLED;
+
+        throw new Error("No need to handle this type of session-updated event");
     }
 }
