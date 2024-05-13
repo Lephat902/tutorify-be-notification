@@ -1,7 +1,7 @@
-import { FileUploadResponseDto, Gender } from '@tutorify/shared';
+import { Gender } from '@tutorify/shared';
 import { Column, Entity, OneToMany, PrimaryColumn } from 'typeorm';
-import { NotificationTrigger } from './notification-trigger.entity';
 import { NotificationReceives } from './notification-receives.entity';
+import { NotificationTrigger } from './notification-trigger.entity';
 
 @Entity()
 export class User {

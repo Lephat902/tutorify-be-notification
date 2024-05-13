@@ -9,6 +9,7 @@ import {
     UserUpdatedEventPayload,
 } from '@tutorify/shared';
 import { NotificationRepository, UserRepository } from '../repositories';
+import { Notification } from '../entities';
 
 @Controller()
 export class EventHandler {
@@ -30,13 +31,12 @@ export class EventHandler {
     @EventPattern(new UserDeletedEventPattern())
     async handleUserDeleted(payload: UserDeletedEventPayload) {
         const { userId } = payload;
-        await this.notificationRepository.delete({
-            notificationTrigger: {
-                user: {
-                    id: userId
-                }
-            }
-        });
+        await this.notificationRepository
+            .createQueryBuilder()
+            .delete()
+            .from(Notification)
+            .where('"notificationTriggerId" IN (SELECT "id" FROM "notification_trigger" WHERE "userId" = :userId)', { userId })
+            .execute();
         await this.userRepository.delete({ id: userId });
     }
 
