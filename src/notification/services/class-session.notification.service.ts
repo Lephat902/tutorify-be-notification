@@ -1,7 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import {
     ClassProxy,
-    ClassSessionCreatedEventPayload,
+    MultiClassSessionsCreatedEventPayload,
     ClassSessionDeletedEventPayload,
     ClassSessionUpdatedEventPayload
 } from "@tutorify/shared";
@@ -16,14 +16,14 @@ export class ClassSessionNotificationService {
         private readonly classProxy: ClassProxy,
     ) { }
 
-    async handleClassSessionCreated(payload: ClassSessionCreatedEventPayload) {
+    async handleClassSessionCreated(payload: MultiClassSessionsCreatedEventPayload) {
         const classData = await this.classProxy.getClassById<Class>(payload.classId);
         const { studentId, title: classTitle } = classData;
 
         return this.notificationRepository.saveNewNotification(
             {
                 classTitle,
-                ...payload
+                numOfSessionsCreatedInBatch: payload.sessionsDetails.length
             },
             NotificationType.CLASS_SESSION_CREATED,
             payload.tutorId,

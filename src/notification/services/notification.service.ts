@@ -2,7 +2,7 @@ import { Injectable } from "@nestjs/common";
 import {
     ClassApplicationCreatedEventPayload,
     ClassApplicationUpdatedEventPayload,
-    ClassSessionCreatedEventPayload,
+    MultiClassSessionsCreatedEventPayload,
     ClassSessionDeletedEventPayload,
     ClassSessionUpdatedEventPayload,
     FeedbackCreatedEventPayload
@@ -48,12 +48,7 @@ export class NotificationService {
 
     // CLASS SESSION
 
-    handleClassSessionCreated(payload: ClassSessionCreatedEventPayload) {
-        // Ignore other recurring sessions
-        if (!payload.isFirstSessionInBatch) {
-            return;
-        }
-        console.log("Start sending session-created notification");
+    handleClassSessionCreated(payload: MultiClassSessionsCreatedEventPayload) {
         return this.classSessionNotificationService.handleClassSessionCreated(payload);
     }
 

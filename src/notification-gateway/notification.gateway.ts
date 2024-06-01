@@ -13,8 +13,8 @@ import {
     ClassApplicationCreatedEventPayload,
     ClassApplicationUpdatedEventPattern,
     ClassApplicationUpdatedEventPayload,
-    ClassSessionCreatedEventPattern,
-    ClassSessionCreatedEventPayload,
+    MultiClassSessionsCreatedEventPattern,
+    MultiClassSessionsCreatedEventPayload,
     ClassSessionDeletedEventPattern,
     ClassSessionDeletedEventPayload,
     ClassSessionUpdatedEventPattern,
@@ -96,8 +96,8 @@ export class NotificationGateway implements OnGatewayConnection, OnGatewayDiscon
 
     // CLASS SESSION
 
-    @EventPattern(new ClassSessionCreatedEventPattern())
-    async handleClassSessionCreated(payload: ClassSessionCreatedEventPayload) {
+    @EventPattern(new MultiClassSessionsCreatedEventPattern())
+    async handleClassSessionCreated(payload: MultiClassSessionsCreatedEventPayload) {
         const notification = await this.notificationService.handleClassSessionCreated(payload);
         this.emitNotification(notification.notificationType, notification);
     }
